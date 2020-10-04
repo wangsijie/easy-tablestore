@@ -120,4 +120,76 @@ export default class EasyTableStore {
             });
         });
     }
+
+    async searchByTerms(tableName: string, indexName: string, conditions: any, columnsToGet?: string[]) {
+        const query = {
+            queryType: TableStore.QueryType.BOOL_QUERY,
+            query: {
+                mustQueries: Object.keys(conditions).map(key => ({
+                    queryType: TableStore.QueryType.TERM_QUERY,
+                    query: {
+                        fieldName: key,
+                        term: valueToOTSValue(conditions[key]),
+                    },
+                })),
+            },
+        };
+        return await this.search(tableName, indexName, query, columnsToGet);
+    }
+
+    // query: https://github.com/aliyun/aliyun-tablestore-nodejs-sdk/blob/master/samples/search.js
+    async search(tableName: string, indexName: string, query: any, columnsToGet?: string[]) {
+        let next = null;
+        const result = [];
+        do {
+            const { rows, nextToken } = await this.searchPage(
+                next,
+                tableName,
+                indexName,
+                query,
+                columnsToGet,
+            );
+            result.push(...rows);
+            next = nextToken;
+        } while (next);
+        return result.map(tsRowToObject);
+    }
+
+    async searchPage(
+        nextToken: any,
+        tableName: string,
+        indexName: string,
+        query: any,
+        columnsToGet?: string[],
+    ): Promise<{ rows: any[]; nextToken: any }> {
+        const params = {
+            tableName: this.prefix + tableName,
+            indexName: this.prefix + indexName,
+            searchQuery: {
+                offset: 0,
+                limit: 100,
+                query,
+                getTotalCount: true,
+                token: nextToken,
+            },
+            columnToGet: !columnsToGet ? {
+                returnType: TableStore.ColumnReturnType.RETURN_ALL,
+            } : {
+                    returnType: TableStore.ColumnReturnType.RETURN_SPECIFIED,
+                    returnNames: columnsToGet,
+                },
+        };
+        return new Promise((resolve, reject) => {
+            this.client.search(params, (err: any, data: any) => {
+                if (err) {
+                    return reject(err);
+                }
+                const nextToken = data.nextToken.toString('base64');
+                resolve({
+                    rows: data.rows,
+                    nextToken,
+                });
+            });
+        });
+    }
 }
