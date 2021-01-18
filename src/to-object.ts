@@ -6,6 +6,8 @@ export const tsRowToObject = (row: any) => {
     row.attributes.forEach((item: any) => {
         if (item.columnValue.toNumber) {
             result[item.columnName] = item.columnValue.toNumber();
+        } else if (typeof item.columnValue === 'boolean') {
+            result[item.columnName] = item.columnValue;
         } else {
             result[item.columnName] = item.columnValue.toString();
         }
