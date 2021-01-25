@@ -87,8 +87,12 @@ export default class EasyTableStore {
                 if (err) {
                     return reject(err);
                 }
-                const row = tsRowToObject(data.row);
-                resolve(row);
+                if (data.row && Object.keys(data.row).length) {
+                    const row = tsRowToObject(data.row);
+                    resolve(row);
+                } else {
+                    resolve(null);
+                }
             });
         });
     }
