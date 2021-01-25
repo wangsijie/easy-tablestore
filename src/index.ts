@@ -71,6 +71,28 @@ export default class EasyTableStore {
         });
     }
 
+    async getRow(tableName: string, pks: OTSPkItem[], columnsToGet?: string[]) {
+        pks.forEach(pks =>
+            Object.keys(pks).forEach(pk => (pks[pk] = valueToOTSValue(pks[pk])))
+        );
+        const params = {
+            tableName: this.prefix + tableName,
+            direction: TableStore.Direction.FORWARD,
+            primaryKey: pks,
+            limit: 500,
+            columnsToGet,
+        };
+        return new Promise((resolve, reject) => {
+            this.client.getRow(params, (err: any, data: any) => {
+                if (err) {
+                    return reject(err);
+                }
+                const row = tsRowToObject(data.row);
+                resolve(row);
+            });
+        });
+    }
+
     async getRows(tableName: string, startPks: OTSPkItem[], endPks: OTSPkItem[], columnsToGet?: string[]) {
         startPks.forEach(pks =>
             Object.keys(pks).forEach(pk => (pks[pk] = valueToOTSValue(pks[pk])))

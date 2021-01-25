@@ -1,7 +1,11 @@
 export const tsRowToObject = (row: any) => {
     const result: { [key: string]: any } = {};
     row.primaryKey.forEach((item: any) => {
-        result[item.name] = item.value;
+        if (item.value.toNumber) {
+            result[item.name] = item.value.toNumber();
+        } else {
+            result[item.name] = item.value;
+        }
     });
     row.attributes.forEach((item: any) => {
         if (item.columnValue.toNumber) {

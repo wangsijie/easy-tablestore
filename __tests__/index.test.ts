@@ -1,7 +1,7 @@
 import EasyTableStore, { TS } from '../src/index';
 
 const client = new EasyTableStore({
-    accessKeyId: 'LTAI4GCbQbkWxzXbba3TEttJ',
+    accessKeyId: 'LTxxxttJ',
     accessKeySecret: '',
     endpoint: 'https://platform.cn-shanghai.ots.aliyuncs.com',
     instancename: 'platform',
@@ -25,4 +25,17 @@ test('getRows', async () => {
         ]
     );
     expect(rows.length).toBeGreaterThan(0);
+});
+
+test('getRow', async () => {
+    const row: any = await client.getRow(
+        'learn_event',
+        [
+            { event: 'step-run-code' },
+            { userId: '1' },
+            { date: '20210118' },
+            { stamp: 1610941474218000 },
+        ]
+    );
+    expect(row.event).toBe('step-run-code');
 });
