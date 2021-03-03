@@ -1,6 +1,9 @@
 import * as TableStore from 'tablestore';
 import { valueToOTSValue } from './to-ots-value';
-import { tsRowToObject } from './to-object';
+import { tsRowToObject, OTSObject } from './to-object';
+
+export * from './to-object';
+export * from './to-ots-value';
 
 interface EasyTableStoreOptions {
     accessKeyId: string;
@@ -40,7 +43,7 @@ export default class EasyTableStore {
             this.prefix = prefix;
         }
     }
-    putRow(tableName: string, pks: any, columns: OTSColumn[]) {
+    putRow(tableName: string, pks: any, columns: OTSColumn[]): Promise<OTSObject | null> {
         Object.keys(pks).forEach(pk => {
             pks[pk] = valueToOTSValue(pks[pk]);
         });
@@ -66,7 +69,11 @@ export default class EasyTableStore {
                     reject(err);
                     return;
                 }
-                resolve(data);
+                if (data.row) {
+                    resolve(tsRowToObject(data.row));
+                } else {
+                    resolve(null);
+                }
             });
         });
     }

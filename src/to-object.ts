@@ -1,4 +1,8 @@
-export const tsRowToObject = (row: any) => {
+export interface OTSObject {
+    [key: string]: string | number;
+}
+
+export const tsRowToObject = (row: any): OTSObject => {
     const result: { [key: string]: any } = {};
     row.primaryKey.forEach((item: any) => {
         if (item.value.toNumber) {
