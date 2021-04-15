@@ -1,8 +1,8 @@
 import EasyTableStore, { TS } from '../src/index';
 
 const client = new EasyTableStore({
-    accessKeyId: '',
-    accessKeySecret: '',
+    accessKeyId: process.env.AK,
+    accessKeySecret: process.env.SK,
     endpoint: 'https://platform.cn-shanghai.ots.aliyuncs.com',
     instancename: 'platform',
     prefix: 'dev_',
@@ -14,17 +14,44 @@ test('getRows', async () => {
         [
             { event: 'step-run-code' },
             { userId: '1' },
-            { date: '20210118' },
+            { date: '20210125' },
             { stamp: TS.INF_MIN },
         ],
         [
             { event: 'step-run-code' },
             { userId: '1' },
-            { date: '20210118' },
+            { date: '20210125' },
             { stamp: TS.INF_MAX },
         ]
     );
     expect(rows.length).toBeGreaterThan(0);
+});
+
+test('getRows onPage', async () => {
+    const start = new Date().getTime();
+    const rows = await client.getRows(
+        'learn_event',
+        [
+            { event: 'step-run-code' },
+            { userId: '1' },
+            { date: '20210125' },
+            { stamp: TS.INF_MIN },
+        ],
+        [
+            { event: 'step-run-code' },
+            { userId: '1' },
+            { date: '20210125' },
+            { stamp: TS.INF_MAX },
+        ],
+        undefined,
+        async (rs, next) => {
+            expect(rs.length).toBeGreaterThan(0);
+            await new Promise(r => setTimeout(r, 1000));
+        },
+    );
+    const end = new Date().getTime();
+    expect(rows.length).toBeGreaterThan(0);
+    expect(end - start).toBeGreaterThan(1000);
 });
 
 test('getRow', async () => {
@@ -33,8 +60,8 @@ test('getRow', async () => {
         [
             { event: 'step-run-code' },
             { userId: '1' },
-            { date: '20210118' },
-            { stamp: 1610941474218000 },
+            { date: '20210125' },
+            { stamp: 1611532940464000 },
         ]
     );
     expect(row.event).toBe('step-run-code');

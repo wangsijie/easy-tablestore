@@ -104,7 +104,7 @@ export default class EasyTableStore {
         });
     }
 
-    async getRows(tableName: string, startPks: OTSPkItem[], endPks: OTSPkItem[], columnsToGet?: string[]) {
+    async getRows(tableName: string, startPks: OTSPkItem[], endPks: OTSPkItem[], columnsToGet?: string[], onPage?: (rows: any[], next: OTSNextPk[]) => Promise<void>) {
         startPks.forEach(pks =>
             Object.keys(pks).forEach(pk => (pks[pk] = valueToOTSValue(pks[pk])))
         );
@@ -121,6 +121,9 @@ export default class EasyTableStore {
                 endPks,
                 columnsToGet,
             );
+            if (onPage) {
+                await onPage(rows, next);
+            }
             result = [...result, ...rows];
             if (!next) {
                 return result;
