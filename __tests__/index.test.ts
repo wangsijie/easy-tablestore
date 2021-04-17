@@ -120,3 +120,24 @@ test('putRow(object) and getRow', async () => {
     expect(row.stamp).toBe(result.stamp);
     expect(row.foo).toBe('baz');
 });
+
+test('delete row', async () => {
+    const result = await client.putRow(
+        'learn_event',
+        {
+            event: 'easy-tablestore-test',
+            userId: '1',
+            date: '20210417',
+            stamp: TS.PK_AUTO_INCR,
+        },
+        {
+            foo: 'baz',
+        }
+    );
+    await client.deleteRow('learn_event', Object.keys(result).map(key => ({ [key]: result[key] })));
+    const row: any = await client.getRow(
+        'learn_event',
+        Object.keys(result).map(key => ({ [key]: result[key] })),
+    );
+    expect(row).toBe(null);
+});

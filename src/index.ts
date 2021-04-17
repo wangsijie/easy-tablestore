@@ -232,4 +232,23 @@ export default class EasyTableStore {
             });
         });
     }
+
+    async deleteRow(tableName: string, pks: OTSPkItem[]) {
+        pks.forEach(pks =>
+            Object.keys(pks).forEach(pk => (pks[pk] = valueToOTSValue(pks[pk])))
+        );
+        const params = {
+            tableName: this.prefix + tableName,
+            condition: new TableStore.Condition(TableStore.RowExistenceExpectation.IGNORE, null),
+            primaryKey: pks,
+        };
+        return new Promise((resolve, reject) => {
+            this.client.deleteRow(params, (err: any, data: any) => {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(null);
+            });
+        });
+    }
 }
