@@ -67,6 +67,19 @@ test('getRow', async () => {
     expect(row.event).toBe('step-run-code');
 });
 
+test('getRow(pks in object form)', async () => {
+    const row: any = await client.getRow(
+        'learn_event',
+        {
+            event: 'step-run-code',
+            userId: '1',
+            date: '20210125',
+            stamp: 1611532940464000,
+        },
+    );
+    expect(row.event).toBe('step-run-code');
+});
+
 test('getRow not found', async () => {
     const row: any = await client.getRow(
         'learn_event',

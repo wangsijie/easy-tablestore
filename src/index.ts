@@ -29,6 +29,14 @@ interface OTSNextPk {
 
 export const TS = TableStore;
 
+function formatPksToArray(pks: OTSPkItem[] | OTSObject): OTSPkItem[] {
+    const pkGroups = Array.isArray(pks) ? pks : Object.keys(pks).map(key => ({ [key]: pks[key] }))
+    return pkGroups.map(pkGroup => {
+        const key = Object.keys(pkGroup)[0];
+        return { [key]: valueToOTSValue(pkGroup[key]) };
+    });
+}
+
 export default class EasyTableStore {
     client: any;
     prefix: string = '';
@@ -82,14 +90,11 @@ export default class EasyTableStore {
         });
     }
 
-    async getRow(tableName: string, pks: OTSPkItem[], columnsToGet?: string[]) {
-        pks.forEach(pks =>
-            Object.keys(pks).forEach(pk => (pks[pk] = valueToOTSValue(pks[pk])))
-        );
+    async getRow(tableName: string, pks: OTSPkItem[] | OTSObject, columnsToGet?: string[]) {
         const params = {
             tableName: this.prefix + tableName,
             direction: TableStore.Direction.FORWARD,
-            primaryKey: pks,
+            primaryKey: formatPksToArray(pks),
             limit: 500,
             columnsToGet,
         };
@@ -108,21 +113,17 @@ export default class EasyTableStore {
         });
     }
 
-    async getRows(tableName: string, startPks: OTSPkItem[], endPks: OTSPkItem[], columnsToGet?: string[], onPage?: (rows: any[], next: OTSNextPk[]) => Promise<void>) {
-        startPks.forEach(pks =>
-            Object.keys(pks).forEach(pk => (pks[pk] = valueToOTSValue(pks[pk])))
-        );
-        endPks.forEach(pks =>
-            Object.keys(pks).forEach(pk => (pks[pk] = valueToOTSValue(pks[pk])))
-        );
+    async getRows(tableName: string, startPks: OTSPkItem[] | OTSObject, endPks: OTSPkItem[] | OTSObject, columnsToGet?: string[], onPage?: (rows: any[], next: OTSNextPk[]) => Promise<void>) {
+        const formatedStartPks = formatPksToArray(startPks);
+        const formatedEndPks = formatPksToArray(endPks);
         // 得到的rows按照下标0-n是从旧到新，新的在最后
         let result: any[] = [];
         let nextPks = null;
         while (true) {
             const [rows, next] = await this.getRowsPage(
                 tableName,
-                nextPks || startPks,
-                endPks,
+                nextPks || formatedStartPks,
+                formatedEndPks,
                 columnsToGet,
             );
             if (onPage) {
@@ -233,14 +234,11 @@ export default class EasyTableStore {
         });
     }
 
-    async deleteRow(tableName: string, pks: OTSPkItem[]) {
-        pks.forEach(pks =>
-            Object.keys(pks).forEach(pk => (pks[pk] = valueToOTSValue(pks[pk])))
-        );
+    async deleteRow(tableName: string, pks: OTSPkItem[] | OTSObject) {
         const params = {
             tableName: this.prefix + tableName,
             condition: new TableStore.Condition(TableStore.RowExistenceExpectation.IGNORE, null),
-            primaryKey: pks,
+            primaryKey: formatPksToArray(pks),
         };
         return new Promise((resolve, reject) => {
             this.client.deleteRow(params, (err: any, data: any) => {
