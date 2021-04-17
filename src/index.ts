@@ -43,10 +43,19 @@ export default class EasyTableStore {
             this.prefix = prefix;
         }
     }
-    putRow(tableName: string, pks: any, columns: OTSColumn[]): Promise<OTSObject | null> {
+    putRow(tableName: string, pks: OTSObject, columnsOrDataObject: OTSColumn[] | OTSObject): Promise<OTSObject | null> {
         Object.keys(pks).forEach(pk => {
             pks[pk] = valueToOTSValue(pks[pk]);
         });
+        const attributeColumns = Array.isArray(columnsOrDataObject) ? [
+            ...columnsOrDataObject.map(column => {
+                const item = { [column.key]: valueToOTSValue(column.value) };
+                return item;
+            }),
+        ] : Object.keys(columnsOrDataObject).map(key => {
+            const item = { [key]: valueToOTSValue(columnsOrDataObject[key]) };
+            return item;
+        })
         const params = {
             tableName: this.prefix + tableName,
             condition: new TableStore.Condition(
@@ -54,12 +63,7 @@ export default class EasyTableStore {
                 null,
             ),
             primaryKey: [pks],
-            attributeColumns: [
-                ...columns.map(column => {
-                    const item = { [column.key]: valueToOTSValue(column.value) };
-                    return item;
-                }),
-            ],
+            attributeColumns,
             returnContent: { returnType: TableStore.ReturnType.Primarykey },
         };
 

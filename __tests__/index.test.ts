@@ -79,3 +79,44 @@ test('getRow not found', async () => {
     );
     expect(row).toBe(null);
 });
+
+test('putRow and getRow', async () => {
+    const result = await client.putRow(
+        'learn_event',
+        {
+            event: 'easy-tablestore-test',
+            userId: '1',
+            date: '20210417',
+            stamp: TS.PK_AUTO_INCR,
+        },
+        [
+            { foo: 'bar' },
+        ],
+    );
+    const row: any = await client.getRow(
+        'learn_event',
+        Object.keys(result).map(key => ({ [key]: result[key] })),
+    );
+    expect(row.stamp).toBe(result.stamp);
+});
+
+test('putRow(object) and getRow', async () => {
+    const result = await client.putRow(
+        'learn_event',
+        {
+            event: 'easy-tablestore-test',
+            userId: '1',
+            date: '20210417',
+            stamp: TS.PK_AUTO_INCR,
+        },
+        {
+            foo: 'baz',
+        }
+    );
+    const row: any = await client.getRow(
+        'learn_event',
+        Object.keys(result).map(key => ({ [key]: result[key] })),
+    );
+    expect(row.stamp).toBe(result.stamp);
+    expect(row.foo).toBe('baz');
+});

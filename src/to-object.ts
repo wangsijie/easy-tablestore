@@ -1,5 +1,5 @@
 export interface OTSObject {
-    [key: string]: string | number;
+    [key: string]: any;
 }
 
 export const tsRowToObject = (row: any): OTSObject => {
