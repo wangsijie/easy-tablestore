@@ -30,7 +30,7 @@ interface OTSNextPk {
 export const TS = TableStore;
 
 function formatPksToArray(pks: OTSPkItem[] | OTSObject): OTSPkItem[] {
-    const pkGroups = Array.isArray(pks) ? pks : Object.keys(pks).map(key => ({ [key]: pks[key] }))
+    const pkGroups = Array.isArray(pks) ? pks : Object.keys(pks).map(key => ({ [key]: pks[key] }));
     return pkGroups.map(pkGroup => {
         const key = Object.keys(pkGroup)[0];
         return { [key]: valueToOTSValue(pkGroup[key]) };
@@ -40,7 +40,13 @@ function formatPksToArray(pks: OTSPkItem[] | OTSObject): OTSPkItem[] {
 export default class EasyTableStore {
     client: any;
     prefix: string = '';
-    constructor({ accessKeyId, accessKeySecret, endpoint, instancename, prefix }: EasyTableStoreOptions) {
+    constructor({
+        accessKeyId,
+        accessKeySecret,
+        endpoint,
+        instancename,
+        prefix,
+    }: EasyTableStoreOptions) {
         this.client = new TableStore.Client({
             accessKeyId,
             accessKeySecret,
@@ -51,25 +57,28 @@ export default class EasyTableStore {
             this.prefix = prefix;
         }
     }
-    putRow(tableName: string, pks: OTSObject, columnsOrDataObject: OTSColumn[] | OTSObject): Promise<OTSObject | null> {
+    putRow(
+        tableName: string,
+        pks: OTSObject,
+        columnsOrDataObject: OTSColumn[] | OTSObject
+    ): Promise<OTSObject | null> {
         Object.keys(pks).forEach(pk => {
             pks[pk] = valueToOTSValue(pks[pk]);
         });
-        const attributeColumns = Array.isArray(columnsOrDataObject) ? [
-            ...columnsOrDataObject.map(column => {
-                const item = { [column.key]: valueToOTSValue(column.value) };
-                return item;
-            }),
-        ] : Object.keys(columnsOrDataObject).map(key => {
-            const item = { [key]: valueToOTSValue(columnsOrDataObject[key]) };
-            return item;
-        })
+        const attributeColumns = Array.isArray(columnsOrDataObject)
+            ? [
+                  ...columnsOrDataObject.map(column => {
+                      const item = { [column.key]: valueToOTSValue(column.value) };
+                      return item;
+                  }),
+              ]
+            : Object.keys(columnsOrDataObject).map(key => {
+                  const item = { [key]: valueToOTSValue(columnsOrDataObject[key]) };
+                  return item;
+              });
         const params = {
             tableName: this.prefix + tableName,
-            condition: new TableStore.Condition(
-                TableStore.RowExistenceExpectation.IGNORE,
-                null,
-            ),
+            condition: new TableStore.Condition(TableStore.RowExistenceExpectation.IGNORE, null),
             primaryKey: [pks],
             attributeColumns,
             returnContent: { returnType: TableStore.ReturnType.Primarykey },
@@ -113,7 +122,13 @@ export default class EasyTableStore {
         });
     }
 
-    async getRows(tableName: string, startPks: OTSPkItem[] | OTSObject, endPks: OTSPkItem[] | OTSObject, columnsToGet?: string[], onPage?: (rows: any[], next: OTSNextPk[]) => Promise<void>) {
+    async getRows(
+        tableName: string,
+        startPks: OTSPkItem[] | OTSObject,
+        endPks: OTSPkItem[] | OTSObject,
+        columnsToGet?: string[],
+        onPage?: (rows: any[], next: OTSNextPk[]) => Promise<void>
+    ) {
         const formatedStartPks = formatPksToArray(startPks);
         const formatedEndPks = formatPksToArray(endPks);
         // 得到的rows按照下标0-n是从旧到新，新的在最后
@@ -124,7 +139,7 @@ export default class EasyTableStore {
                 tableName,
                 nextPks || formatedStartPks,
                 formatedEndPks,
-                columnsToGet,
+                columnsToGet
             );
             if (onPage) {
                 await onPage(rows, next);
@@ -141,7 +156,7 @@ export default class EasyTableStore {
         tableName: string,
         startPks: any,
         endPks: any,
-        columnsToGet?: string[],
+        columnsToGet?: string[]
     ): Promise<[any[], OTSNextPk[]]> {
         const params = {
             tableName: this.prefix + tableName,
@@ -162,7 +177,12 @@ export default class EasyTableStore {
         });
     }
 
-    async searchByTerms(tableName: string, indexName: string, conditions: any, columnsToGet?: string[]) {
+    async searchByTerms(
+        tableName: string,
+        indexName: string,
+        conditions: any,
+        columnsToGet?: string[]
+    ) {
         const query = {
             queryType: TableStore.QueryType.BOOL_QUERY,
             query: {
@@ -188,7 +208,7 @@ export default class EasyTableStore {
                 tableName,
                 indexName,
                 query,
-                columnsToGet,
+                columnsToGet
             );
             result.push(...rows);
             next = nextToken;
@@ -201,7 +221,7 @@ export default class EasyTableStore {
         tableName: string,
         indexName: string,
         query: any,
-        columnsToGet?: string[],
+        columnsToGet?: string[]
     ): Promise<{ rows: any[]; nextToken: any }> {
         const params = {
             tableName: this.prefix + tableName,
@@ -213,12 +233,14 @@ export default class EasyTableStore {
                 getTotalCount: true,
                 token: nextToken,
             },
-            columnToGet: !columnsToGet ? {
-                returnType: TableStore.ColumnReturnType.RETURN_ALL,
-            } : {
-                    returnType: TableStore.ColumnReturnType.RETURN_SPECIFIED,
-                    returnNames: columnsToGet,
-                },
+            columnToGet: !columnsToGet
+                ? {
+                      returnType: TableStore.ColumnReturnType.RETURN_ALL,
+                  }
+                : {
+                      returnType: TableStore.ColumnReturnType.RETURN_SPECIFIED,
+                      returnNames: columnsToGet,
+                  },
         };
         return new Promise((resolve, reject) => {
             this.client.search(params, (err: any, data: any) => {
@@ -246,6 +268,31 @@ export default class EasyTableStore {
                     return reject(err);
                 }
                 resolve(null);
+            });
+        });
+    }
+
+    async updateRow(
+        tableName: string,
+        pks: OTSPkItem[] | OTSObject,
+        updateOfAttributeColumns: OTSObject[]
+    ) {
+        const params = {
+            tableName: this.prefix + tableName,
+            condition: new TableStore.Condition(TableStore.RowExistenceExpectation.IGNORE, null),
+            primaryKey: formatPksToArray(pks),
+            updateOfAttributeColumns,
+        };
+        return new Promise((resolve, reject) => {
+            this.client.updateRow(params, (err: any, data: any) => {
+                if (err) {
+                    return reject(err);
+                }
+                if (data) {
+                    resolve(data);
+                } else {
+                    resolve(null);
+                }
             });
         });
     }
